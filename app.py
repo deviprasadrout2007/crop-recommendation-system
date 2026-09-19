@@ -194,7 +194,16 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.20, random_state=42, stratify=y
 )
 
-trained_models, training_table = train_models(X_train, y_train)
+try:
+    with st.spinner("Training machine learning models..."):
+        trained_models, training_table = train_models(X_train, y_train)
+
+    st.success("All models trained successfully!")
+
+except Exception as error:
+    st.error("Model training failed!")
+    st.exception(error)
+    st.stop()
 
 st.header("🤖 Model Comparison")
 test_rows = []
