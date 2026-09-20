@@ -194,16 +194,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.20, random_state=42, stratify=y
 )
 
-try:
-    with st.spinner("Training machine learning models..."):
-        trained_models, training_table = train_models(X_train, y_train)
-
-    st.success("All models trained successfully!")
-
-except Exception as error:
-    st.error("Model training failed!")
-    st.exception(error)
-    st.stop()
+trained_models, training_table = train_models(X_train, y_train)
 
 st.header("🤖 Model Comparison")
 test_rows = []
@@ -314,21 +305,35 @@ with st.form("prediction_form"):
     submitted = st.form_submit_button("🌱 Recommend Crop")
 
 if submitted:
-    input_df = pd.DataFrame([{
-        "n": n_value,
-        "p": p_value,
-        "k": k_value,
-        "temperature": temperature_value,
-        "humidity": humidity_value,
-        "ph": ph_value,
-        "rainfall": rainfall_value,
-    }])
-    crop = selected_model.predict(input_df)[0]
-    st.success(f"Recommended Crop: {str(crop).upper()}")
-    st.info(
-        "This is a model prediction, not a guarantee. "
-        "Consult local agricultural guidance before planting."
-    )
+    try:
+        input_df = pd.DataFrame([{
+            "n": float(n_value),
+            "p": float(p_value),
+            "k": float(k_value),
+            "temperature": float(temperature_value),
+            "humidity": float(humidity_value),
+            "ph": float(ph_value),
+            "rainfall": float(rainfall_value),
+        }])
+
+        # Ensure the prediction columns exactly match the training order.
+        input_df = input_df[FEATURES]
+
+        # Validate the prediction input before calling the model.
+        if input_df[FEATURES].isnull().any().any():
+            st.error("Please enter valid numeric values for all fields.")
+        else:
+            crop = selected_model.predict(input_df)[0]
+            st.success(f"Recommended Crop: {str(crop).upper()}")
+            st.info(
+                "This is a model prediction, not a guarantee. "
+                "Consult local agricultural guidance before planting."
+            )
+
+    except Exception as error:
+        st.error(f"Prediction error: {error}")
+        st.write("Input sent to the model:")
+        st.dataframe(input_df)
 
 st.markdown("---")
 st.caption("B.Tech CSE AI/ML Project | Crop Recommendation System")
